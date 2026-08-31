@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prateleira de Desejos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #f7f5f0;
+    --bg-deep: #eeebe2;
+    --panel: #ffffff;
+    --panel-raised: #fbfaf6;
+    --label: #16233f;
+    --label-dim: #5c6478;
+    --amber: #16233f;
+    --amber-bright: #a67c3e;
+    --brass: #7c6136;
+    --muted-green: #64708a;
+    --line: rgba(22,35,63,0.14);
+    --danger: #9c2b3e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: radial-gradient(ellipse at top, #ffffff 0%, var(--bg-deep) 75%);
+    color: var(--label);
+    font-family: 'Inter', sans-serif;
+    min-height:100vh;
+    padding-bottom: 60px;
+  }
+  .wrap{ max-width: 1080px; margin:0 auto; padding: 0 24px; }
+
+  header.hero{
+    padding: 56px 24px 40px;
+    text-align:center;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted-green);
+    margin-bottom: 14px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(32px, 5vw, 52px);
+    margin: 0 0 10px;
+    letter-spacing: -0.5px;
+  }
+  .sub{
+    color: var(--label-dim);
+    font-size: 15px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .stats{
+    display:flex;
+    justify-content:center;
+    gap: 40px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+  .stat{
+    text-align:center;
+  }
+  .stat .num{
+    font-family:'Fraunces', serif;
+    font-size: 28px;
+    color: var(--amber-bright);
+  }
+  .stat .lbl{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted-green);
+    margin-top: 2px;
+  }
+
+  .toolbar{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap: 16px;
+    margin: 0 0 24px;
+    flex-wrap: wrap;
+  }
+  .toolbar .filters{
+    display:flex;
+    gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+  }
+  .chip{
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--label-dim);
+    cursor:pointer;
+    transition: all .15s ease;
+    letter-spacing: 0.5px;
+  }
+  .chip:hover{ border-color: var(--amber); color: var(--label); }
+  .chip.active{ background: var(--amber); border-color: var(--amber); color: #ffffff; font-weight:600; }
+
+  .btn-add{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    background: var(--amber);
+    color: #ffffff;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform .12s ease, background .15s ease;
+  }
+  .btn-add:hover{ background: var(--amber-bright); transform: translateY(-1px); }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 22px;
+  }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    display:flex;
+    flex-direction:column;
+    transition: border-color .15s ease, transform .15s ease;
+  }
+  .card:hover{ border-color: var(--brass); transform: translateY(-2px); }
+  .card{ cursor: pointer; }
+  .card.owned{}
+
+  .tag-num{
+    position:absolute;
+    top: 12px;
+    left: 12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    background: rgba(22,35,63,0.82);
+    color: #f0ede5;
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--line);
+    z-index: 3;
+  }
+
+  .seal{
+    position:absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #ffffff;
+    z-index: 3;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    text-align:center;
+    line-height:1.1;
+  }
+  .seal.alta{ background: var(--amber-bright); }
+  .seal.media{ background: var(--brass); }
+  .seal.baixa{ background: var(--muted-green); color: #ffffff;}
+  .seal.owned-seal{
+    background: var(--panel-raised);
+    border: 1px solid var(--brass);
+    color: var(--brass);
+    width: auto;
+    height: auto;
+    border-radius: 20px;
+    padding: 6px 10px;
+    font-size: 8px;
+  }
+
+  .img-box{
+    height: 220px;
+    background: var(--bg-deep);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    position: relative;
+    border-bottom: 1px solid var(--line);
+  }
+  .img-box img{
+    width:100%; height:100%; object-fit: contain;
+    padding: 14px 14px 20px;
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 10px 8px rgba(0,0,0,0.5));
+  }
+  .img-box::before{
+    content:'';
+    position:absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 58%;
+    height: 16px;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 72%);
+    z-index: 1;
+  }
+  .img-box .placeholder{
+    font-family:'Fraunces', serif;
+    font-size: 42px;
+    color: var(--line);
+    position: relative;
+    z-index: 2;
+  }
+
+  .card-body{
+    padding: 16px 16px 18px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap: 6px;
+  }
+  .brand{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted-green);
+  }
+  .name{
+    font-family:'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .price{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--amber-bright);
+    margin-top: 2px;
+  }
+  .notes{
+    font-size: 13px;
+    color: var(--label-dim);
+    line-height: 1.5;
+    margin-top: 4px;
+  }
+
+  .card-actions{
+    display:flex;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 12px;
+  }
+  .card-actions a, .card-actions button{
+    flex:1;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-align:center;
+    padding: 9px 8px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--label-dim);
+    cursor:pointer;
+    text-decoration:none;
+    transition: all .15s ease;
+  }
+  .card-actions a:hover{ border-color: var(--brass); color: var(--label); }
+  .card-actions .own-btn:hover{ border-color: var(--muted-green); color: var(--label); }
+  .card-actions .del-btn:hover{ border-color: var(--danger); color: var(--label); }
+  .card-actions .icon-btn{
+    flex: 0 0 auto;
+    width: 34px;
+    padding: 9px 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .empty{
+    text-align:center;
+    padding: 80px 20px;
+    color: var(--label-dim);
+    font-family:'Fraunces', serif;
+    font-size: 18px;
+    border: 1px dashed var(--line);
+    border-radius: 14px;
+  }
+  .empty .sub2{
+    font-family:'Inter', sans-serif;
+    font-size: 13px;
+    margin-top: 8px;
+    color: var(--muted-green);
+  }
+
+  /* modal */
+  .overlay{
+    position: fixed; inset:0;
+    background: rgba(15,22,38,0.55);
+    backdrop-filter: blur(3px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index: 110;
+    padding: 20px;
+  }
+  .modal{
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 460px;
+    max-height: 88vh;
+    overflow-y:auto;
+    padding: 28px;
+  }
+  .modal h2{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 24px;
+    margin: 0 0 20px;
+  }
+  .field{ margin-bottom: 14px; }
+  .field label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted-green);
+    margin-bottom: 6px;
+  }
+  .field input, .field textarea, .field select{
+    width:100%;
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--label);
+    font-family:'Inter', sans-serif;
+    font-size: 14px;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{
+    outline: none;
+    border-color: var(--amber);
+  }
+  .field textarea{ resize:vertical; min-height: 60px; }
+  .row2{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .modal-actions{
+    display:flex;
+    gap: 10px;
+    margin-top: 22px;
+  }
+  .modal-actions button{
+    flex:1;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight:600;
+    letter-spacing: 0.5px;
+    cursor:pointer;
+  }
+  .btn-cancel{ background: transparent; border: 1px solid var(--line) !important; color: var(--label-dim); }
+  .btn-save{ background: var(--amber); color: #ffffff; }
+  .btn-save:hover{ background: var(--amber-bright); }
+
+  .loading-state{ text-align:center; padding: 60px; color: var(--muted-green); font-family:'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 1px;}
+
+  .upload-box{
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    background: var(--bg-deep);
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-box:hover{ border-color: var(--amber); }
+  .upload-placeholder{
+    color: var(--label-dim);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .upload-placeholder .icon{ font-size: 24px; display:block; margin-bottom: 6px; }
+  #image-preview{
+    display:none;
+    width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+  .remove-image-btn{
+    display:none;
+    width:100%;
+    margin-top: 8px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--label-dim);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 8px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .remove-image-btn:hover{ border-color: var(--danger); color: var(--label); }
+  .upload-hint{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted-green);
+    margin-top: 6px;
+  }
+  .removebg-toggle{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    margin-top: 10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--label-dim);
+    cursor: pointer;
+  }
+  .removebg-toggle input{
+    width: 15px;
+    height: 15px;
+    accent-color: var(--amber);
+    cursor: pointer;
+  }
+
+  .layout{
+    display:flex;
+    align-items:flex-start;
+    gap: 32px;
+  }
+  .sidebar{
+    width: 190px;
+    flex: 0 0 190px;
+    position: sticky;
+    top: 24px;
+  }
+  .sidebar-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted-green);
+    margin-bottom: 12px;
+  }
+  .type-list{
+    display:flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .type-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 10px;
+    text-align:left;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--label-dim);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .type-item:hover{ border-color: var(--amber); color: var(--label); }
+  .type-item.active{ background: var(--amber); border-color: var(--amber); color: #ffffff; font-weight: 600; }
+  .type-item .count{
+    font-size: 10px;
+    opacity: 0.7;
+  }
+  .main-content{ flex: 1; min-width: 0; }
+
+  @media (max-width: 720px){
+    .layout{ flex-direction: column; gap: 20px; }
+    .sidebar{ width: 100%; flex: none; position: static; }
+    .type-list{
+      flex-direction: row;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .type-item{ flex: 0 0 auto; white-space: nowrap; }
+  }
+
+  .detail-overlay{
+    position: fixed;
+    inset: 0;
+    background: var(--bg-deep);
+    z-index: 100;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform .25s ease;
+  }
+  .detail-overlay.active{ transform: translateX(0); }
+  .detail-page{
+    max-width: 640px;
+    margin: 0 auto;
+    padding-bottom: 60px;
+  }
+  .detail-back{
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display:flex;
+    align-items:center;
+    gap: 6px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(6px);
+    border: none;
+    color: var(--label-dim);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    padding: 16px 20px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+  }
+  .detail-back:hover{ color: var(--label); }
+  .detail-img-box{
+    height: 340px;
+    background: var(--bg-deep);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position: relative;
+    margin: 0 20px;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .detail-img-box img{
+    width:100%; height:100%; object-fit: contain;
+    padding: 24px;
+    filter: drop-shadow(0 14px 10px rgba(0,0,0,0.5));
+  }
+  .detail-img-box .placeholder{
+    font-family:'Fraunces', serif;
+    font-size: 64px;
+    color: var(--line);
+  }
+  .detail-body{ padding: 26px 20px 0; }
+  .detail-top-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap: 12px;
+  }
+  .detail-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted-green);
+    margin-bottom: 6px;
+  }
+  .detail-name{
+    font-family:'Fraunces', serif;
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 10px;
+  }
+  .detail-badge{
+    flex-shrink: 0;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 7px 12px;
+    border-radius: 20px;
+    color: #ffffff;
+  }
+  .detail-badge.alta{ background: var(--amber-bright); }
+  .detail-badge.media{ background: var(--brass); }
+  .detail-badge.baixa{ background: var(--muted-green); color: #ffffff; }
+  .detail-badge.owned-badge{
+    background: var(--panel-raised);
+    border: 1px solid var(--brass);
+    color: var(--brass);
+  }
+  .detail-price{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 22px;
+    color: var(--amber-bright);
+    margin: 6px 0 20px;
+  }
+  .detail-notes-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted-green);
+    margin-bottom: 8px;
+  }
+  .detail-notes{
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--label-dim);
+    margin-bottom: 28px;
+    white-space: pre-wrap;
+  }
+  .detail-actions{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .detail-actions a, .detail-actions button{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    padding: 12px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--label-dim);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .detail-actions a:hover, .detail-actions button:hover{ border-color: var(--brass); color: var(--label); }
+  .detail-actions .detail-buy{ background: var(--amber); border-color: var(--amber); color: #ffffff; font-weight: 600; }
+  .detail-actions .detail-buy:hover{ background: var(--amber-bright); }
+  .detail-actions .detail-del:hover{ border-color: var(--danger); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">Catálogo pessoal</div>
+  <h1>Prateleira de Desejos</h1>
+  <p class="sub">Garrafas de edição especial e formatos incomuns que você quer garantir para a coleção.</p>
+  <div class="stats">
+    <div class="stat"><div class="num" id="stat-total">0</div><div class="lbl">Na lista</div></div>
+    <div class="stat"><div class="num" id="stat-owned">0</div><div class="lbl">Adquiridas</div></div>
+    <div class="stat"><div class="num" id="stat-value">R$0</div><div class="lbl">Valor total</div></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">Tipo de bebida</div>
+      <div class="type-list" id="type-list"></div>
+    </aside>
+    <main class="main-content">
+  <div class="toolbar">
+    <div>
+      <div class="sidebar-title">Status</div>
+      <div class="filters" id="filters">
+        <div class="chip active" data-filter="all">Todas</div>
+        <div class="chip" data-filter="wishlist">Desejadas</div>
+        <div class="chip" data-filter="owned">Adquiridas</div>
+      </div>
+    </div>
+    <button class="btn-add" id="open-add">+ Adicionar garrafa</button>
+  </div>
+
+  <div id="content">
+    <div class="loading-state">Carregando prateleira...</div>
+  </div>
+    </main>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-page">
+    <button class="detail-back" id="detail-back">← Voltar para a prateleira</button>
+    <div class="detail-img-box" id="detail-img-box"></div>
+    <div class="detail-body">
+      <div class="detail-top-row">
+        <div>
+          <div class="detail-tag" id="detail-tag"></div>
+          <div class="detail-name" id="detail-name"></div>
+        </div>
+        <div class="detail-badge" id="detail-badge"></div>
+      </div>
+      <div class="detail-price" id="detail-price"></div>
+      <div id="detail-notes-block" style="display:none;">
+        <div class="detail-notes-label">Notas</div>
+        <div class="detail-notes" id="detail-notes"></div>
+      </div>
+      <div class="detail-actions">
+        <a id="detail-link" target="_blank" rel="noopener" class="detail-buy" style="display:none;">Ver na loja</a>
+        <button id="detail-edit">Editar</button>
+        <button id="detail-own"></button>
+        <button id="detail-del" class="detail-del">Remover</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="pin-overlay" style="display:none;">
+  <div class="modal" style="max-width:300px; text-align:center;">
+    <h2 style="margin-bottom:6px;">Código de acesso</h2>
+    <p style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--label-dim); margin:0 0 18px;">Digite o código para fazer alterações na prateleira.</p>
+    <div class="field">
+      <input id="pin-input" type="password" inputmode="numeric" maxlength="8" placeholder="••••" style="text-align:center; font-size:22px; letter-spacing:10px;">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="pin-cancel">Cancelar</button>
+      <button class="btn-save" id="pin-confirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" style="display:none;">
+  <div class="modal">
+    <h2 id="modal-title">Nova garrafa</h2>
+    <div class="field">
+      <label>Nome da garrafa</label>
+      <input id="f-name" type="text" placeholder="Ex: Hibiki 21 anos — edição Kacho Fugetsu">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Marca / Destilaria</label>
+        <input id="f-brand" type="text" placeholder="Ex: Suntory">
+      </div>
+      <div class="field">
+        <label>Tipo de bebida</label>
+        <select id="f-type">
+          <option value="">Selecione...</option>
+          <option value="Whisky">Whisky</option>
+          <option value="Vodka">Vodka</option>
+          <option value="Gin">Gin</option>
+          <option value="Rum">Rum</option>
+          <option value="Tequila">Tequila</option>
+          <option value="Licor">Licor</option>
+          <option value="Vinho">Vinho</option>
+          <option value="Espumante">Espumante</option>
+          <option value="Cachaça">Cachaça</option>
+          <option value="Conhaque">Conhaque</option>
+          <option value="Cerveja">Cerveja</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Foto da garrafa</label>
+      <div class="upload-box" id="upload-box">
+        <input id="f-image-file" type="file" accept="image/*" style="display:none">
+        <div class="upload-placeholder" id="upload-placeholder">
+          <span class="icon">📷</span>
+          Toque para escolher da galeria ou tirar uma foto
+        </div>
+        <img id="image-preview">
+      </div>
+      <button type="button" class="remove-image-btn" id="remove-image-btn">Remover foto</button>
+      <label class="removebg-toggle">
+        <input type="checkbox" id="f-removebg" checked>
+        Remover fundo automaticamente
+      </label>
+      <div class="upload-hint">Funciona melhor em fotos com fundo liso (branco, preto, etc). A foto é comprimida e fica salva na nuvem.</div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Preço estimado (R$)</label>
+        <input id="f-price" type="number" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Prioridade</label>
+        <select id="f-priority">
+          <option value="alta">Alta</option>
+          <option value="media" selected>Média</option>
+          <option value="baixa">Baixa</option>
+        </select>
+
+      </div>
+    </div>
+    <div class="field">
+      <label>Link da loja (opcional)</label>
+      <input id="f-link" type="text" placeholder="https://...">
+    </div>
+    <div class="field">
+      <label>Notas</label>
+      <textarea id="f-notes" placeholder="Formato da garrafa, edição limitada, onde viu, etc."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="cancel-btn">Cancelar</button>
+      <button class="btn-save" id="save-btn">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA76cGnpRVa0VOkPvvmhdhQ9uUUlRTvFIM",
+  authDomain: "garrafas-catalogo.firebaseapp.com",
+  projectId: "garrafas-catalogo",
+  storageBucket: "garrafas-catalogo.firebasestorage.app",
+  messagingSenderId: "822194476446",
+  appId: "1:822194476446:web:21ea18a5bc1ad6bf7bb28f"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const COLLECTION = 'wishlist-items';
+
+const EDIT_PIN = '9201';
+const PIN_STORAGE_KEY = 'wishlist-unlocked';
+let pendingPinAction = null;
+
+function isUnlocked(){
+  return localStorage.getItem(PIN_STORAGE_KEY) === 'true';
+}
+
+function withPin(action){
+  return function(...args){
+    if(isUnlocked()){
+      action(...args);
+      return;
+    }
+    pendingPinAction = () => action(...args);
+    const input = document.getElementById('pin-input');
+    input.value = '';
+    document.getElementById('pin-overlay').style.display = 'flex';
+    setTimeout(() => input.focus(), 50);
+  };
+}
+
+function confirmPin(){
+  const input = document.getElementById('pin-input');
+  if(input.value.trim() === EDIT_PIN){
+    localStorage.setItem(PIN_STORAGE_KEY, 'true');
+    document.getElementById('pin-overlay').style.display = 'none';
+    const action = pendingPinAction;
+    pendingPinAction = null;
+    if(action) action();
+  } else {
+    alert('Código incorreto.');
+    input.value = '';
+    input.focus();
+  }
+}
+
+function cancelPin(){
+  document.getElementById('pin-overlay').style.display = 'none';
+  pendingPinAction = null;
+}
+
+
+let items = [];
+let editingId = null;
+let currentFilter = 'all';
+let currentTypeFilter = 'all';
+let currentImageData = '';
+const DRINK_TYPES = ['Whisky','Vodka','Gin','Rum','Tequila','Licor','Vinho','Espumante','Cachaça','Conhaque','Cerveja','Outro'];
+
+function loadImageElement(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function removeBackgroundFromCanvas(ctx, w, h, tolerance = 32){
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+  const idx = (x, y) => (y * w + x) * 4;
+
+  const samplePixel = (x, y) => {
+    const i = idx(x, y);
+    return [data[i], data[i + 1], data[i + 2]];
+  };
+  const corners = [samplePixel(0, 0), samplePixel(w - 1, 0), samplePixel(0, h - 1), samplePixel(w - 1, h - 1)];
+  const bg = [0, 1, 2].map(c => Math.round(corners.reduce((sum, p) => sum + p[c], 0) / 4));
+
+  const colorDist = (x, y) => {
+    const i = idx(x, y);
+    const dr = data[i] - bg[0], dg = data[i + 1] - bg[1], db = data[i + 2] - bg[2];
+    return Math.sqrt(dr * dr + dg * dg + db * db);
+  };
+
+  const visited = new Uint8Array(w * h);
+  const stack = [];
+  for(let x = 0; x < w; x++){ stack.push([x, 0]); stack.push([x, h - 1]); }
+  for(let y = 0; y < h; y++){ stack.push([0, y]); stack.push([w - 1, y]); }
+
+  while(stack.length){
+    const [x, y] = stack.pop();
+    if(x < 0 || y < 0 || x >= w || y >= h) continue;
+    const pos = y * w + x;
+    if(visited[pos]) continue;
+    visited[pos] = 1;
+    if(colorDist(x, y) <= tolerance){
+      data[idx(x, y) + 3] = 0;
+      stack.push([x + 1, y]); stack.push([x - 1, y]); stack.push([x, y + 1]); stack.push([x, y - 1]);
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
+async function processImage(file, { maxWidth = 900, quality = 0.85, removeBg = true } = {}){
+  const img = await loadImageElement(file);
+  let w = img.width, h = img.height;
+  if(w > maxWidth){ h = Math.round(h * (maxWidth / w)); w = maxWidth; }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+
+  if(removeBg){
+    removeBackgroundFromCanvas(ctx, w, h);
+  }
+
+  const data = ctx.getImageData(0, 0, w, h).data;
+  let hasTransparency = false;
+  for(let i = 3; i < data.length; i += 4){
+    if(data[i] < 255){ hasTransparency = true; break; }
+  }
+
+  return hasTransparency ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', quality);
+}
+
+function setImagePreview(dataUrl){
+  currentImageData = dataUrl || '';
+  const preview = document.getElementById('image-preview');
+  const placeholder = document.getElementById('upload-placeholder');
+  const removeBtn = document.getElementById('remove-image-btn');
+  if(currentImageData){
+    preview.src = currentImageData;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+    removeBtn.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+    placeholder.style.display = 'block';
+    removeBtn.style.display = 'none';
+  }
+}
+
+function initFirestore(){
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="loading-state">Conectando ao banco de dados...</div>';
+  db.collection(COLLECTION).onSnapshot(
+    (snapshot) => {
+      items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      render();
+      if(location.hash) handleHashChange();
+    },
+    (err) => {
+      console.error(err);
+      content.innerHTML = '<div class="empty">Não consegui conectar ao banco de dados.<div class="sub2">Verifique sua internet e recarregue a página.</div></div>';
+    }
+  );
+}
+
+function priorityLabel(p){
+  return { alta: 'Alta', media: 'Média', baixa: 'Baixa' }[p] || 'Média';
+}
+
+function formatCurrency(n){
+  if(!n) return 'R$0';
+  return 'R$' + Number(n).toLocaleString('pt-BR');
+}
+
+function render(){
+  const content = document.getElementById('content');
+
+  let filtered = items;
+  if(currentFilter === 'wishlist') filtered = filtered.filter(i => !i.owned);
+  if(currentFilter === 'owned') filtered = filtered.filter(i => i.owned);
+  if(currentTypeFilter !== 'all') filtered = filtered.filter(i => i.type === currentTypeFilter);
+
+  document.getElementById('stat-total').textContent = items.filter(i=>!i.owned).length;
+  document.getElementById('stat-owned').textContent = items.filter(i=>i.owned).length;
+  const totalValue = items.reduce((sum,i)=> sum + (Number(i.price)||0), 0);
+  document.getElementById('stat-value').textContent = formatCurrency(totalValue);
+
+  renderTypeList();
+
+  if(filtered.length === 0){
+    content.innerHTML = `
+      <div class="empty">
+        ${items.length === 0 ? 'A prateleira está vazia.' : 'Nenhuma garrafa encontrada com esse filtro.'}
+        <div class="sub2">${items.length === 0 ? 'Adicione a primeira garrafa que você quer para a coleção.' : 'Tente outro tipo ou limpe o filtro.'}</div>
+      </div>`;
+    return;
+  }
+
+  content.innerHTML = `<div class="grid">${filtered.map((item, idx) => cardHTML(item, idx)).join('')}</div>`;
+
+  filtered.forEach(item => {
+    document.getElementById('own-'+item.id)?.addEventListener('click', (e) => { e.stopPropagation(); withPin(toggleOwned)(item.id); });
+    document.getElementById('del-'+item.id)?.addEventListener('click', (e) => { e.stopPropagation(); withPin(deleteItem)(item.id); });
+    document.getElementById('edit-'+item.id)?.addEventListener('click', (e) => { e.stopPropagation(); withPin(openEdit)(item.id); });
+  });
+
+  content.querySelectorAll('.card').forEach(cardEl => {
+    cardEl.addEventListener('click', (e) => {
+      if(e.target.closest('.card-actions')) return;
+      openDetailView(cardEl.dataset.id);
+    });
+  });
+}
+
+function renderTypeList(){
+  const list = document.getElementById('type-list');
+  const counts = {};
+  DRINK_TYPES.forEach(t => counts[t] = 0);
+  items.forEach(i => { if(i.type && counts.hasOwnProperty(i.type)) counts[i.type]++; });
+
+  const rows = [{ key: 'all', label: 'Todos os tipos', count: items.length }, ...DRINK_TYPES.map(t => ({ key: t, label: t, count: counts[t] }))];
+
+  list.innerHTML = rows.map(r => `
+    <button class="type-item ${currentTypeFilter === r.key ? 'active' : ''}" data-type="${r.key}">
+      <span>${r.label}</span><span class="count">${r.count}</span>
+    </button>`).join('');
+
+  list.querySelectorAll('.type-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentTypeFilter = btn.dataset.type;
+      render();
+    });
+  });
+}
+
+function cardHTML(item, idx){
+  const catalogNum = String(items.findIndex(i=>i.id===item.id) + 1).padStart(3, '0');
+  const imgBlock = item.image
+    ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" onerror="this.parentElement.innerHTML='<div class=&quot;placeholder&quot;>🍾</div>'">`
+    : `<div class="placeholder">🍾</div>`;
+
+  return `
+    <div class="card ${item.owned ? 'owned' : ''}" data-id="${item.id}">
+      <div class="tag-num">Nº ${catalogNum}</div>
+      ${item.owned ? `<div class="seal owned-seal">Adquirida</div>` : `<div class="seal ${item.priority}">${priorityLabel(item.priority)}</div>`}
+      <div class="img-box">${imgBlock}</div>
+      <div class="card-body">
+        ${(item.type || item.brand) ? `<div class="brand">${escapeHtml([item.type, item.brand].filter(Boolean).join(' · '))}</div>` : ''}
+        <div class="name">${escapeHtml(item.name)}</div>
+        ${item.price ? `<div class="price">${formatCurrency(item.price)}</div>` : ''}
+        ${item.notes ? `<div class="notes">${escapeHtml(item.notes)}</div>` : ''}
+        <div class="card-actions">
+          ${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">Ver loja</a>` : ''}
+          <button id="edit-${item.id}">Editar</button>
+          <button id="own-${item.id}" class="own-btn">${item.owned ? 'Desmarcar' : 'Adquirida'}</button>
+          <button id="del-${item.id}" class="del-btn icon-btn" title="Remover" aria-label="Remover">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function escapeHtml(str){
+  if(!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function toggleOwned(id){
+  const item = items.find(i => i.id === id);
+  if(!item) return;
+  try{
+    await db.collection(COLLECTION).doc(id).update({ owned: !item.owned });
+  }catch(e){
+    alert('Não consegui atualizar. Verifique sua internet.');
+  }
+}
+
+async function deleteItem(id){
+  try{
+    await db.collection(COLLECTION).doc(id).delete();
+  }catch(e){
+    alert('Não consegui remover. Verifique sua internet.');
+  }
+}
+
+function openDetailView(id){
+  location.hash = 'item-' + id;
+}
+
+function closeDetailView(){
+  if(location.hash){
+    history.back();
+  } else {
+    document.getElementById('detail-overlay').classList.remove('active');
+  }
+}
+
+function renderDetailView(item){
+  const imgBox = document.getElementById('detail-img-box');
+  imgBox.innerHTML = item.image
+    ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}">`
+    : `<div class="placeholder">🍾</div>`;
+
+  document.getElementById('detail-tag').textContent = [item.type, item.brand].filter(Boolean).join(' · ') || 'Sem categoria';
+  document.getElementById('detail-name').textContent = item.name;
+  document.getElementById('detail-price').textContent = item.price ? formatCurrency(item.price) : '';
+
+  const badge = document.getElementById('detail-badge');
+  if(item.owned){
+    badge.textContent = 'Adquirida';
+    badge.className = 'detail-badge owned-badge';
+  } else {
+    badge.textContent = priorityLabel(item.priority);
+    badge.className = 'detail-badge ' + (item.priority || 'media');
+  }
+
+  const notesBlock = document.getElementById('detail-notes-block');
+  if(item.notes){
+    notesBlock.style.display = 'block';
+    document.getElementById('detail-notes').textContent = item.notes;
+  } else {
+    notesBlock.style.display = 'none';
+  }
+
+  const link = document.getElementById('detail-link');
+  if(item.link){
+    link.href = item.link;
+    link.style.display = 'inline-block';
+  } else {
+    link.style.display = 'none';
+  }
+
+  document.getElementById('detail-own').textContent = item.owned ? 'Desmarcar como adquirida' : 'Marcar como adquirida';
+
+  document.getElementById('detail-edit').onclick = () => withPin(openEdit)(item.id);
+  document.getElementById('detail-del').onclick = () => withPin(() => { closeDetailView(); deleteItem(item.id); })();
+  document.getElementById('detail-own').onclick = () => withPin(toggleOwned)(item.id);
+}
+
+function handleHashChange(){
+  const overlay = document.getElementById('detail-overlay');
+  const match = location.hash.match(/^#item-(.+)$/);
+  if(match){
+    const item = items.find(i => i.id === match[1]);
+    if(item){
+      renderDetailView(item);
+      overlay.classList.add('active');
+      return;
+    }
+  }
+  overlay.classList.remove('active');
+}
+
+window.addEventListener('hashchange', handleHashChange);
+document.getElementById('detail-back').addEventListener('click', closeDetailView);
+
+function openAdd(){
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Nova garrafa';
+  ['f-name','f-brand','f-price','f-link','f-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-priority').value = 'media';
+  document.getElementById('f-type').value = '';
+  setImagePreview('');
+  document.getElementById('overlay').style.display = 'flex';
+}
+
+function openEdit(id){
+  const item = items.find(i => i.id === id);
+  if(!item) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Editar garrafa';
+  document.getElementById('f-name').value = item.name || '';
+  document.getElementById('f-brand').value = item.brand || '';
+  document.getElementById('f-type').value = item.type || '';
+  setImagePreview(item.image || '');
+  document.getElementById('f-price').value = item.price || '';
+  document.getElementById('f-link').value = item.link || '';
+  document.getElementById('f-notes').value = item.notes || '';
+  document.getElementById('f-priority').value = item.priority || 'media';
+  document.getElementById('overlay').style.display = 'flex';
+}
+
+function closeModal(){
+  document.getElementById('overlay').style.display = 'none';
+}
+
+async function saveForm(){
+  const name = document.getElementById('f-name').value.trim();
+  if(!name){ document.getElementById('f-name').focus(); return; }
+
+  const data = {
+    name,
+    brand: document.getElementById('f-brand').value.trim(),
+    type: document.getElementById('f-type').value,
+    image: currentImageData,
+    price: document.getElementById('f-price').value,
+    link: document.getElementById('f-link').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+    priority: document.getElementById('f-priority').value,
+  };
+
+  const saveBtn = document.getElementById('save-btn');
+  const originalLabel = saveBtn.textContent;
+  saveBtn.textContent = 'Salvando...';
+  saveBtn.disabled = true;
+
+  try{
+    if(editingId){
+      await db.collection(COLLECTION).doc(editingId).update(data);
+    } else {
+      await db.collection(COLLECTION).add({ owned: false, createdAt: Date.now(), ...data });
+    }
+    closeModal();
+  }catch(e){
+    console.error(e);
+    alert('Não deu para salvar. Verifique sua internet e tente de novo. Se o problema continuar, a foto pode estar grande demais.');
+  }finally{
+    saveBtn.textContent = originalLabel;
+    saveBtn.disabled = false;
+  }
+}
+
+document.getElementById('upload-box').addEventListener('click', () => {
+  document.getElementById('f-image-file').click();
+});
+
+document.getElementById('f-image-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const placeholder = document.getElementById('upload-placeholder');
+  const originalText = placeholder.innerHTML;
+  placeholder.innerHTML = 'Removendo fundo e processando foto...';
+  try{
+    const removeBg = document.getElementById('f-removebg').checked;
+    const processed = await processImage(file, { removeBg });
+    setImagePreview(processed);
+  }catch(err){
+    console.error(err);
+    alert('Não consegui ler essa foto. Tente outra.');
+    placeholder.innerHTML = originalText;
+  }
+  e.target.value = '';
+});
+
+document.getElementById('remove-image-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  setImagePreview('');
+});
+
+document.getElementById('open-add').addEventListener('click', withPin(openAdd));
+document.getElementById('pin-confirm').addEventListener('click', confirmPin);
+document.getElementById('pin-cancel').addEventListener('click', cancelPin);
+document.getElementById('pin-input').addEventListener('keydown', (e) => { if(e.key === 'Enter') confirmPin(); });
+document.getElementById('pin-overlay').addEventListener('click', (e) => { if(e.target.id === 'pin-overlay') cancelPin(); });
+document.getElementById('cancel-btn').addEventListener('click', closeModal);
+document.getElementById('save-btn').addEventListener('click', saveForm);
+document.getElementById('overlay').addEventListener('click', (e) => { if(e.target.id === 'overlay') closeModal(); });
+
+document.getElementById('filters').addEventListener('click', (e) => {
+  if(!e.target.classList.contains('chip')) return;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  e.target.classList.add('active');
+  currentFilter = e.target.dataset.filter;
+  render();
+});
+
+initFirestore();
+</script>
+
+</body>
+</html>
